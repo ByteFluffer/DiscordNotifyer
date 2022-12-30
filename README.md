@@ -6,4 +6,4 @@ How to use?
 4) In your Prestashop admin panel go to "Modules"->"Module manager".
 5) Upload the zip that you just made. When that's done click on "Config".
 6) By "Discord webhook url" enter your Discord webhook URL. More info about Discord webhooks: https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
-Now your'e done! 
+7) Now your'e done! 
