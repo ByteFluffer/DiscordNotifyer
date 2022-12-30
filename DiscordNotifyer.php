@@ -19,7 +19,7 @@ class DiscordNotifyer extends Module {
 		parent::__construct();
 		// Name & description for in module catalogus
 		$this->displayName = $this->l("Discord notifyer");
-		$this->description = $this->l("Sends notification to Discord on order and contact");
+		$this->description = $this->l("Sends notification to Discord on order, contact, payment, order confirmation and backoffice test mail");
 
 		$this->confirmUninstall = $this->l("Are you sure you want to uninstall?");
 	}
@@ -114,11 +114,29 @@ class DiscordNotifyer extends Module {
 	// Mail hook trigger
 	public function hookactionEmailSendBefore($param) {
 		
-		// Webhook code (working)
-		$url = strval(Tools::getValue("WEBHOOK_URL", Configuration::get("WEBHOOK_URL")));
-		$headers = [ 'Content-Type: application/json; charset=utf-8' ];
-		$POST = [ 'username' => 'Webstore', 'content' => 'I work!' ];
+		// Getting type
+		if($param["template"] == "contact_form"){
+			$type_mail = "Er is een contact form ingediend!";
+		} elseif ($param["template"] == "account") {
+			$type_mail = "Er is een account aangemaakt in de webstore!";
+		} elseif ($param["template"] == "order_conf") {
+			$type_mail = "Er is een bevestigde order binnengekomen!";
+		} elseif ($param["template"] == "payment") {
+			$type_mail = "Er is een betaling verwerkt in de webstore!";
+		} elseif ($param["template"] == "test") {
+			$type_mail = "Er is een testmail verstuurd vanuit de backoffice.";
+		} else {
+			
+		}
 
+		// Getting URL from config page
+		$url = strval(Tools::getValue("WEBHOOK_URL", Configuration::get("WEBHOOK_URL")));
+		// Setting headers
+		$headers = [ "Content-Type: application/json; charset=utf-8" ];
+		// Webhook sending content
+		$POST = [ "username" => "Webstore", "content" => strval($type_mail) ];
+		
+		// Curl stuff
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_POST, true);
