@@ -1,4 +1,5 @@
 <?php
+// Prefend from module gets executed from outside PS
 if (!defined("_PS_VERSION_")) {
 	exit;
 }
@@ -14,10 +15,10 @@ class DiscordNotifyer extends Module {
 		// Checks compatiblity
 		$this->ps_versions_compliancy = array("min" => "1.6", "max" => "1.8.99.99");
 		$this->bootstrap = true;
-
+		// Parent contructor
 		parent::__construct();
-
-		$this->displayName = $this->l("DiscordNotifyer");
+		// Name & description for in module catalogus
+		$this->displayName = $this->l("Discord notifyer");
 		$this->description = $this->l("Sends notification to Discord on order and contact");
 
 		$this->confirmUninstall = $this->l("Are you sure you want to uninstall?");
@@ -25,17 +26,9 @@ class DiscordNotifyer extends Module {
 	
 	// Gets called when module gets installed
 	public function install()
-	{
-    if (Shop::isFeatureActive()) {
-        Shop::setContext(Shop::CONTEXT_ALL);
-    }
-
-   return (
-        parent::install() 
-        && $this->registerHook("displayLeftColumn")
-        && $this->registerHook("displayHeader")
-        && Configuration::updateValue("MYMODULE_NAME", "my friend")
-    ); 
+	{	
+		// Register actionEmailSendBefore hook
+		return parent::install() && $this->registerHook("actionEmailSendBefore");
 	}
 	
 	// Gets called when module gets uninstalled
@@ -48,5 +41,93 @@ class DiscordNotifyer extends Module {
 			return true;
 		}
 	}
-	
+
+	// Configuration code
+	public function getContent()
+	{
+		$output = "";
+
+		// When forum gets submitted
+		if (Tools::isSubmit("submit" . $this->name)) {
+			// Get webhook url
+			$configValue = (string) Tools::getValue("WEBHOOK_URL");
+
+			// check that the value is valid
+			if (empty($configValue) || !Validate::isGenericName($configValue)) {
+				// invalid value, show an error
+				$output = $this->displayError($this->l("Invalid Configuration value"));
+			} else {
+				// value is ok, update it and display a confirmation message
+				Configuration::updateValue("WEBHOOK_URL", $configValue);
+				$output = $this->displayConfirmation($this->l("Settings updated"));
+			}
+		}
+
+		// display any message, then the form
+		return $output . $this->displayForm();
+	}
+
+	// Making the form 
+	public function displayForm()
+	{
+		// Init Fields form array
+		$form = [
+			"form" => [
+				"legend" => [
+					"title" => $this->l("Settings"),
+				],
+				"input" => [
+					[
+						"type" => "text",
+						"label" => $this->l("Discord webhook url"),
+						"name" => "WEBHOOK_URL",
+						"size" => 20,
+						"required" => true,
+					],
+				],
+				"submit" => [
+					"title" => $this->l("Save"),
+					"class" => "btn btn-default pull-right",
+				],
+			],
+		];
+
+		$helper = new HelperForm();
+
+		// Module, token and currentIndex
+		$helper->table = $this->table;
+		$helper->name_controller = $this->name;
+		$helper->token = Tools::getAdminTokenLite("AdminModules");
+		$helper->currentIndex = AdminController::$currentIndex . "&" . http_build_query(["configure" => $this->name]);
+		$helper->submit_action = "submit" . $this->name;
+
+		// Default language
+		$helper->default_form_language = (int) Configuration::get("PS_LANG_DEFAULT");
+
+		// Load current value into the form
+		$helper->fields_value["WEBHOOK_URL"] = Tools::getValue("WEBHOOK_URL", Configuration::get("WEBHOOK_URL"));
+
+		return $helper->generateForm([$form]);
+	}
+
+
+	// Mail hook trigger
+	public function hookactionEmailSendBefore($param) {
+		
+		// Webhook code (working)
+		$url = "https://discord.com/api/webhooks/1057059243414523974/TB_JooF1qJ58yxQYZ0uNSa833TLii6CofmHHpRsDMQN3tESze-sK5sp7K1QNIEt0-Z_J";
+		$headers = [ 'Content-Type: application/json; charset=utf-8' ];
+		$POST = [ 'username' => 'Testing BOT', 'content' => 'I got send from a Prestashop module' ];
+
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_POST, true);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($POST));
+		$response   = curl_exec($ch);
+				
+	}
+
 }
