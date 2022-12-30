@@ -115,9 +115,9 @@ class DiscordNotifyer extends Module {
 	public function hookactionEmailSendBefore($param) {
 		
 		// Webhook code (working)
-		$url = "https://discord.com/api/webhooks/1057059243414523974/TB_JooF1qJ58yxQYZ0uNSa833TLii6CofmHHpRsDMQN3tESze-sK5sp7K1QNIEt0-Z_J";
+		$url = strval(Tools::getValue("WEBHOOK_URL", Configuration::get("WEBHOOK_URL")));
 		$headers = [ 'Content-Type: application/json; charset=utf-8' ];
-		$POST = [ 'username' => 'Testing BOT', 'content' => 'I got send from a Prestashop module' ];
+		$POST = [ 'username' => 'Webstore', 'content' => 'I work!' ];
 
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);
